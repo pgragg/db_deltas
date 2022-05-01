@@ -10,7 +10,7 @@ const diffMessage = (message: StandardMessage) => {
       console.log(row.before);
     }
     if (message.type === 'INSERT') {
-      if (message.schema.includes('feather_audit')) {
+      if (message.schema.includes('faudit')) {
         console.log(
           colors.gray(`AUDIT ROW CREATED FOR ${schemaTableCombination}`)
         );
