@@ -5,6 +5,7 @@ const subscriber = redis.createClient()
 const client = redis.createClient()
 const colors = require('colors')
 const difflet = require('difflet')
+const { Table } = require('console-table-printer');
 
 const inMem = {}
 
@@ -17,54 +18,35 @@ function isJsonString(str) {
     return true;
 }
 
+const view = new Table();
+
 const main = async () => {
     await subscriber.connect()
     await client.connect()
     await subscriber.pSubscribe('__keyspace@0__*', async (message, channel) => {
-        // console.log({ message, channel });
         const key = channel.slice(15, channel.length)
         const action = message
+        let index = 0
+        const previousValue = inMem[key]
+        console.log({ inMem })
+        await client.get(key).then((newValue) => {
+            index += 1;
+            let verb;
+            let diff = difflet.compare(previousValue, newValue)
+            inMem[key] = newValue;
 
-        // console.log({ key, action })
-
-        const existing = inMem[key]
-        console.log({inMem})
-        // console.log({existing})
-        await client.get(key).then((inRedis) => {
-            inMem[key] = inRedis;
-            let diff = difflet.compare(existing, inRedis)
-
-            if(isJsonString(existing) && isJsonString(inRedis))
-            {
-                diff = difflet.compare(JSON.parse(existing), JSON.parse(inRedis))
+            if (isJsonString(previousValue) && isJsonString(newValue)) {
+                diff = difflet.compare(JSON.parse(previousValue), JSON.parse(newValue))
             }
 
-            if (existing) {
-                console.log(colors.blue(`UPDATED ${key} (${action}): ${existing} => ${diff}`))
-                
-            }
+            if (previousValue) { verb = "UPDATE"; color = "blue" }
+            if (!previousValue && action === 'set') { verb = "CREATE"; color = "green" }
+            if (action === 'del') { verb = "DELETE"; color = "red" }
 
-            if (!existing && action === 'set') {
-                console.log(colors.green(`CREATED ${key} (${action}): ${existing} => ${inRedis}`))
-            }
-
-            if (action === 'del') {
-                console.log(colors.red(`DELETED ${key} (${action}): ${existing} => ${diff}`))
-            }
+            view.addRow({ key, action, previousValue, newValue, diff }, { color });
+            view.printTable();
         })
-
-
-        /**
-         * { message: 'set', channel: '__keyspace@0__:myKey' }
-           { message: 'myKey', channel: '__keyevent@0__:set' }
-         */
     });
 }
 
 main()
-
-
-
-// await subscriber.pSubscribe('channe*', (message, channel) => {
-//   console.log(message, channel); // 'message', 'channel'
-// });
