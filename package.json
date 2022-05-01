@@ -1,0 +1,19 @@
+{
+  "name": "watch_mongo_and_redis",
+  "version": "1.0.0",
+  "description": "https://www.mongodb.com/docs/manual/changeStreams/",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "console-table-printer": "^2.11.0",
+    "difflet": "^1.0.1",
+    "events": "^3.3.0",
+    "redis": "^4.0.6"
+  }
+}
